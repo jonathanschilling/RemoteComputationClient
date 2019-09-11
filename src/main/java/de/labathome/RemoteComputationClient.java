@@ -34,7 +34,7 @@ public class RemoteComputationClient {
 		blockingStub.reset(ResetRequest.newBuilder().build());
 	}
 
-	public void sendVariable(String name, double value) {
+	public void sendScalarVariable(String name, double value) {
 		SendVariableRequest req = SendVariableRequest
 				.newBuilder()
 				.setVariableName(name)
@@ -44,7 +44,7 @@ public class RemoteComputationClient {
 		blockingStub.sendVariable(req);
 	}
 
-	public void sendVariable(String name, double[] value) {
+	public void sendVectorVariable(String name, double[] value) {
 		if (value != null && value.length>0) {
 			int len = value.length;
 
@@ -61,7 +61,7 @@ public class RemoteComputationClient {
 		}
 	}
 
-	public void sendVariable(String name, double[][] value) {
+	public void sendMatrixVariable(String name, double[][] value) {
 		if (value == null || value.length==0) {
 			throw new RuntimeException("cannot send emtpy array!");
 		} else {
@@ -182,23 +182,7 @@ public class RemoteComputationClient {
 	
 	
 	
-	
-	public void sendSomeData() {
 
-		SendVariableRequest req = SendVariableRequest
-				.newBuilder()
-				.setVariableName("testVariable")
-				.addDimensions(2)
-				.addData(42.0)
-				.addData(41.0)
-				.build();
-		try {
-			blockingStub.sendVariable(req);
-		} catch (StatusRuntimeException e) {
-			System.out.println("RPC failed: "+e.getStatus());
-			e.printStackTrace();
-		}
-	}
 
 	public void execute() {
 
@@ -213,34 +197,6 @@ public class RemoteComputationClient {
 
 	}
 
-	public void queryData() {
-
-		String varName = "testVariable";
-
-		GetVariableRequest req = GetVariableRequest
-				.newBuilder()
-				.setVariableName(varName)
-				.build();
-		GetVariableResult res;
-		try {
-			res = blockingStub.getVariable(req);
-
-			System.out.println("got data for variable "+varName);
-			if (res.getStatus()==0) {
-				for (int i=0; i<res.getDataCount(); ++i) {
-					System.out.println(varName+"["+i+"]="+res.getData(i));
-				}
-			} else {
-				System.out.println(varName+" not found");
-			}
-		} catch (StatusRuntimeException e) {
-			System.out.println("RPC failed: "+e.getStatus());
-			e.printStackTrace();
-		}
-
-	}
-
-
 
 
 	public static void main(String[] args) {
@@ -252,9 +208,9 @@ public class RemoteComputationClient {
 		// clean environment
 		client.reset();
 
-		client.sendVariable("pi", Math.PI);
-		client.sendVariable("twoTimesPi", new double[] {Math.PI, Math.PI});
-		client.sendVariable("matrix", new double[][] {{1,2},{3,4}});
+		client.sendScalarVariable("pi", Math.PI);
+		client.sendVectorVariable("twoTimesPi", new double[] {Math.PI, Math.PI});
+		client.sendMatrixVariable("matrix", new double[][] {{1,2},{3,4}});
 	
 		double pi = client.getScalarVariable("pi");
 		System.out.println("got pi from server: "+pi);
@@ -264,8 +220,23 @@ public class RemoteComputationClient {
 			System.out.println("twoTimesPi has " + d);
 		}
 		
-		double[][] matrix = client.getMatrixVariable("matrix");
+		double[][] matrix_orig = client.getMatrixVariable("matrix");
 		System.out.println("matrix: ");
+		for (double[] v: matrix_orig) {
+			for (double d: v) {
+				System.out.print(d+" ");
+			}
+			System.out.println(" ");
+		}
+		
+		
+		
+		// execute some dynamically-loaded lapack method to compute a QR factorization of a 2x2 matrix called "matrix"
+		client.execute();
+
+
+		double[][] matrix = client.getMatrixVariable("matrix");
+		System.out.println("qr factorization of matrix: ");
 		for (double[] v: matrix) {
 			for (double d: v) {
 				System.out.print(d+" ");
@@ -274,13 +245,8 @@ public class RemoteComputationClient {
 		}
 		
 		
-	//	client.sendSomeData();
-//
-//		client.execute();
-//
-//		client.queryData();
-
-
+		
+		
 
 
 		client.reset();
