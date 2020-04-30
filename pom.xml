@@ -11,6 +11,7 @@
 
 	<artifactId>RemoteComputationClient</artifactId>
 	<version>1.0.1</version>
+	<packaging>jar</packaging>
 
 	<name>RemoteComputationClient</name>
 	<description>client for remote computation client</description>
