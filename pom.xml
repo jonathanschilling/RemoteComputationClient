@@ -11,7 +11,7 @@
 
 	<artifactId>RemoteComputationClient</artifactId>
 	<version>1.0.1</version>
-	
+
 	<name>RemoteComputationClient</name>
 	<description>client for remote computation client</description>
 
